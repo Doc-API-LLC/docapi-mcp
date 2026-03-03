@@ -1,0 +1,34 @@
+{
+  "name": "docapi-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for DocAPI — generate PDFs and screenshots via Claude Desktop, Cursor, and any MCP-compatible agent",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "docapi-mcp": "dist/index.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["mcp", "docapi", "pdf", "screenshot", "og-image", "claude"],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "axios": "^1.7.9",
+    "express": "^4.21.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
