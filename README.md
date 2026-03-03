@@ -15,17 +15,17 @@ Get a free API key at [docapi.co/signup](https://www.docapi.co/signup) — 100 c
 
 ---
 
-## Option A: Local (Claude Desktop / Cursor)
+## Connect (Claude Desktop / Cursor)
 
-**claude_desktop_config.json:**
+Add to your `claude_desktop_config.json`:
+
 ```json
 {
   "mcpServers": {
     "docapi": {
-      "command": "npx",
-      "args": ["docapi-mcp"],
-      "env": {
-        "DOCAPI_KEY": "pk_live_..."
+      "url": "https://mcp.docapi.co/mcp",
+      "headers": {
+        "x-api-key": "pk_live_your_key_here"
       }
     }
   }
@@ -36,71 +36,7 @@ Config file locations:
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
-**Cursor:** Add the same JSON block under Settings → MCP Servers.
-
----
-
-## Option B: Remote (Railway)
-
-Deploy your own instance so any HTTP MCP client can connect.
-
-### 1. Deploy to Railway
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template)
-
-Or manually:
-```bash
-git clone https://github.com/doc-api-llc/docapi-mcp
-cd docapi-mcp
-railway login
-railway init
-railway up
-```
-
-### 2. Set environment variables in Railway dashboard
-
-| Variable | Value |
-|----------|-------|
-| `DOCAPI_KEY` | `pk_live_...` (your API key) |
-| `TRANSPORT` | `http` |
-
-Railway sets `PORT` automatically.
-
-### 3. Connect your MCP client
-
-Your server URL will be something like:
-```
-https://docapi-mcp-production.up.railway.app/mcp
-```
-
-**Claude Desktop with remote server:**
-```json
-{
-  "mcpServers": {
-    "docapi": {
-      "url": "https://docapi-mcp-production.up.railway.app/mcp"
-    }
-  }
-}
-```
-
-Health check: `GET /health` → `{ "status": "ok" }`
-
----
-
-## Development
-
-```bash
-npm install
-npm run build
-DOCAPI_KEY=pk_... npm start          # stdio
-TRANSPORT=http DOCAPI_KEY=pk_... npm start   # HTTP on :3000
-```
-
-Test with MCP Inspector:
-```bash
-npx @modelcontextprotocol/inspector
-```
+**Cursor:** Settings → MCP Servers → add the same block.
 
 ---
 
@@ -110,8 +46,7 @@ npx @modelcontextprotocol/inspector
 
 ```json
 {
-  "html": "<h1>Hello World</h1>",
-  "output_path": "/Users/you/report.pdf",
+  "html": "<h1 style='font-family:sans-serif'>Hello World</h1>",
   "format": "A4",
   "landscape": false,
   "margin_inches": 0.5,
@@ -119,7 +54,7 @@ npx @modelcontextprotocol/inspector
 }
 ```
 
-Omit `output_path` to get base64 PDF content back (useful for remote HTTP deployments).
+Returns base64-encoded PDF. Ask Claude to save it to a file path on your machine.
 
 ### `docapi_capture_screenshot`
 
@@ -146,4 +81,24 @@ Returns credits remaining and USDC address (agent accounts only).
 { "notify_email": "ops@yourcompany.com" }
 ```
 
-Returns `api_key`, `usdc_address`, and Python/JS integration snippets.
+Returns `api_key`, `usdc_address`, and Python/JS integration snippets with the credit monitoring loop.
+
+---
+
+## Self-hosting
+
+The server is deployed at `https://mcp.docapi.co` — no setup needed for most users.
+
+To run your own instance:
+
+```bash
+git clone https://github.com/doc-api-llc/docapi-mcp
+cd docapi-mcp
+npm install && npm run build
+PORT=3000 node dist/index.js   # HTTP (default)
+TRANSPORT=stdio DOCAPI_KEY=pk_... node dist/index.js   # stdio
+```
+
+Deploy to Railway: set no env vars — each user authenticates with their own `x-api-key` header.
+
+Health check: `GET /health` → `{ "status": "ok" }`

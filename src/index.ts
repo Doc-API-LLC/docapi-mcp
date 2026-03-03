@@ -1,63 +1,25 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import express from "express";
-import { generatePdfTool } from "./tools/pdf.js";
-import { captureScreenshotTool } from "./tools/screenshot.js";
-import { checkCreditsTool, registerAgentTool } from "./tools/account.js";
-
-const server = new McpServer({
-  name: "docapi-mcp-server",
-  version: "1.0.0",
-});
-
-server.registerTool(
-  generatePdfTool.name,
-  generatePdfTool.config,
-  generatePdfTool.handler
-);
-server.registerTool(
-  captureScreenshotTool.name,
-  captureScreenshotTool.config,
-  captureScreenshotTool.handler
-);
-server.registerTool(
-  checkCreditsTool.name,
-  checkCreditsTool.config,
-  checkCreditsTool.handler
-);
-server.registerTool(
-  registerAgentTool.name,
-  registerAgentTool.config,
-  registerAgentTool.handler
-);
-
-async function runStdio(): Promise<void> {
-  if (!process.env.DOCAPI_KEY) {
-    console.error(
-      "ERROR: DOCAPI_KEY environment variable is required.\n" +
-        "Get a free API key at https://www.docapi.co/signup"
-    );
-    process.exit(1);
-  }
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("DocAPI MCP server running via stdio");
-}
+import express, { type Request, type Response } from "express";
+import { createServer } from "./server.js";
 
 async function runHttp(): Promise<void> {
-  if (!process.env.DOCAPI_KEY) {
-    console.error(
-      "WARNING: DOCAPI_KEY is not set. PDF and screenshot tools will fail. " +
-        "Set it in your Railway environment variables."
-    );
-  }
-
   const app = express();
   app.use(express.json());
 
-  app.post("/mcp", async (req, res) => {
+  app.post("/mcp", async (req: Request, res: Response) => {
+    const apiKey = req.headers["x-api-key"];
+
+    if (!apiKey || typeof apiKey !== "string") {
+      res.status(401).json({
+        error:
+          "x-api-key header required. Get a free API key at https://www.docapi.co/signup",
+      });
+      return;
+    }
+
+    const server = createServer(apiKey);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
@@ -67,7 +29,7 @@ async function runHttp(): Promise<void> {
     await transport.handleRequest(req, res, req.body);
   });
 
-  app.get("/health", (_req, res) => {
+  app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", server: "docapi-mcp-server", version: "1.0.0" });
   });
 
@@ -77,14 +39,30 @@ async function runHttp(): Promise<void> {
   });
 }
 
-const transport = process.env.TRANSPORT ?? "stdio";
-if (transport === "http") {
-  runHttp().catch((error: unknown) => {
+async function runStdio(): Promise<void> {
+  const apiKey = process.env.DOCAPI_KEY;
+  if (!apiKey) {
+    console.error(
+      "ERROR: DOCAPI_KEY environment variable is required.\n" +
+        "Get a free API key at https://www.docapi.co/signup"
+    );
+    process.exit(1);
+  }
+  const server = createServer(apiKey);
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("DocAPI MCP server running via stdio");
+}
+
+// HTTP is the default for Railway; set TRANSPORT=stdio for local development
+const transport = process.env.TRANSPORT ?? "http";
+if (transport === "stdio") {
+  runStdio().catch((error: unknown) => {
     console.error("Server error:", error);
     process.exit(1);
   });
 } else {
-  runStdio().catch((error: unknown) => {
+  runHttp().catch((error: unknown) => {
     console.error("Server error:", error);
     process.exit(1);
   });

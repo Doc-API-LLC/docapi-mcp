@@ -1,18 +1,10 @@
 import { z } from "zod";
-import fs from "fs";
-import path from "path";
-import { getApiKey, postBinary, handleApiError } from "../client.js";
+import { postBinary, handleApiError } from "../client.js";
 import { PDF_API_URL } from "../constants.js";
 
 const GeneratePdfSchema = z
   .object({
     html: z.string().min(1).describe("HTML content to convert to PDF"),
-    output_path: z
-      .string()
-      .optional()
-      .describe(
-        "Absolute file path to save the PDF (e.g. /Users/you/invoice.pdf). If omitted, returns base64-encoded PDF."
-      ),
     format: z
       .enum(["A4", "Letter", "Legal", "Tabloid"])
       .default("A4")
@@ -36,41 +28,36 @@ const GeneratePdfSchema = z
 
 type GeneratePdfInput = z.infer<typeof GeneratePdfSchema>;
 
-export const generatePdfTool = {
-  name: "docapi_generate_pdf" as const,
-  config: {
-    title: "Generate PDF",
-    description: `Convert HTML to a PDF using DocAPI's headless Chromium renderer. Full CSS support: Flexbox, Grid, custom fonts, gradients, shadows.
+export const generatePdfConfig = {
+  title: "Generate PDF",
+  description: `Convert HTML to a PDF using DocAPI's headless Chromium renderer. Full CSS support: Flexbox, Grid, custom fonts, gradients, shadows.
 
 Args:
   - html (string): HTML to render. Inline styles and <style> tags work. Google Fonts URLs supported.
-  - output_path (string, optional): Absolute path to save the PDF (e.g. "/Users/you/report.pdf"). If omitted, returns base64 PDF data.
   - format ('A4' | 'Letter' | 'Legal' | 'Tabloid'): Paper size. Default: 'A4'.
   - landscape (boolean): Landscape orientation. Default: false.
   - margin_inches (number): Page margin in inches, 0–4. Default: 0.5.
   - print_background (boolean): Render background colors/images. Default: true.
 
-Returns:
-  - With output_path: "PDF saved to /path/file.pdf (N bytes). Credits remaining: N"
-  - Without output_path: base64-encoded PDF content
+Returns: Base64-encoded PDF. You can save it to disk with a file writing tool.
 
 Errors:
-  - 401: Invalid API key — check DOCAPI_KEY
+  - 401: Invalid API key
   - 402: Credits exhausted (agent accounts) — send USDC to top up
-  - 429: Monthly limit exceeded — upgrade plan`,
-    inputSchema: GeneratePdfSchema,
-    annotations: {
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: false,
-      openWorldHint: true,
-    },
+  - 429: Monthly limit exceeded — upgrade plan at https://www.docapi.co/pricing`,
+  inputSchema: GeneratePdfSchema,
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
   },
-  handler: async (params: GeneratePdfInput) => {
-    try {
-      const apiKey = getApiKey();
-      const m = params.margin_inches;
+};
 
+export function generatePdfHandler(apiKey: string) {
+  return async (params: GeneratePdfInput) => {
+    try {
+      const m = params.margin_inches;
       const body: Record<string, unknown> = {
         html: params.html,
         options: {
@@ -95,20 +82,6 @@ Errors:
       const creditsNote =
         creditsRemaining !== null ? ` Credits remaining: ${creditsRemaining}.` : "";
 
-      if (params.output_path) {
-        const absPath = path.resolve(params.output_path);
-        fs.mkdirSync(path.dirname(absPath), { recursive: true });
-        fs.writeFileSync(absPath, pdfBuffer);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `PDF saved to ${absPath} (${pdfBuffer.length.toLocaleString()} bytes).${creditsNote}`,
-            },
-          ],
-        };
-      }
-
       return {
         content: [
           {
@@ -123,5 +96,5 @@ Errors:
         content: [{ type: "text" as const, text: handleApiError(error) }],
       };
     }
-  },
-};
+  };
+}

@@ -1,0 +1,42 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { generatePdfConfig, generatePdfHandler } from "./tools/pdf.js";
+import {
+  captureScreenshotConfig,
+  captureScreenshotHandler,
+} from "./tools/screenshot.js";
+import {
+  checkCreditsConfig,
+  checkCreditsHandler,
+  registerAgentConfig,
+  registerAgentHandler,
+} from "./tools/account.js";
+
+export function createServer(apiKey: string): McpServer {
+  const server = new McpServer({
+    name: "docapi-mcp-server",
+    version: "1.0.0",
+  });
+
+  server.registerTool(
+    "docapi_generate_pdf",
+    generatePdfConfig,
+    generatePdfHandler(apiKey)
+  );
+  server.registerTool(
+    "docapi_capture_screenshot",
+    captureScreenshotConfig,
+    captureScreenshotHandler(apiKey)
+  );
+  server.registerTool(
+    "docapi_check_credits",
+    checkCreditsConfig,
+    checkCreditsHandler(apiKey)
+  );
+  server.registerTool(
+    "docapi_register_agent",
+    registerAgentConfig,
+    registerAgentHandler(apiKey)
+  );
+
+  return server;
+}

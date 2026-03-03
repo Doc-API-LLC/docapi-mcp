@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getApiKey, postBinary, handleApiError } from "../client.js";
+import { postBinary, handleApiError } from "../client.js";
 import { SCREENSHOT_API_URL } from "../constants.js";
 
 const CaptureScreenshotSchema = z
@@ -43,11 +43,9 @@ const CaptureScreenshotSchema = z
 
 type CaptureScreenshotInput = z.infer<typeof CaptureScreenshotSchema>;
 
-export const captureScreenshotTool = {
-  name: "docapi_capture_screenshot" as const,
-  config: {
-    title: "Capture Screenshot",
-    description: `Screenshot a URL or render HTML and capture it as an image. Returns the image inline so you can view it immediately.
+export const captureScreenshotConfig = {
+  title: "Capture Screenshot",
+  description: `Screenshot a URL or render HTML and capture it as an image. Returns the image inline so you can view it immediately.
 
 Common uses: Open Graph images (1200×630), social cards, page thumbnails, template previews.
 
@@ -58,24 +56,23 @@ Args:
   - height (number): Viewport height, 100–2160. Default: 630.
   - format ('png' | 'jpeg'): Image format. Default: 'png'.
 
-Returns: Inline image content you can view directly.
+Returns: Inline image you can view directly.
 
 Examples:
-  - OG image from URL: { url: "https://mysite.com/post/slug", width: 1200, height: 630 }
-  - Social card from HTML: { html: "<div style='background:#0f172a;...'>...</div>", width: 1200, height: 630 }
-  - Page thumbnail: { url: "https://example.com", width: 1280, height: 800 }`,
-    inputSchema: CaptureScreenshotSchema,
-    annotations: {
-      readOnlyHint: true,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: true,
-    },
+  - OG image: { url: "https://mysite.com/blog/post", width: 1200, height: 630 }
+  - Social card: { html: "<div style='background:#0f172a;color:white;padding:60px'><h1>My Post</h1></div>", width: 1200, height: 630 }`,
+  inputSchema: CaptureScreenshotSchema,
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
   },
-  handler: async (params: CaptureScreenshotInput) => {
-    try {
-      const apiKey = getApiKey();
+};
 
+export function captureScreenshotHandler(apiKey: string) {
+  return async (params: CaptureScreenshotInput) => {
+    try {
       const body: Record<string, unknown> = {
         options: {
           width: params.width,
@@ -114,5 +111,5 @@ Examples:
         content: [{ type: "text" as const, text: handleApiError(error) }],
       };
     }
-  },
-};
+  };
+}
