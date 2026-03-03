@@ -36,10 +36,7 @@ const CaptureScreenshotSchema = z
       .default("png")
       .describe("Image format (default: png)"),
   })
-  .strict()
-  .refine((d) => Boolean(d.url) !== Boolean(d.html), {
-    message: "Provide exactly one of 'url' or 'html', not both and not neither",
-  });
+  .strict();
 
 type CaptureScreenshotInput = z.infer<typeof CaptureScreenshotSchema>;
 
@@ -73,6 +70,19 @@ Examples:
 export function captureScreenshotHandler(apiKey: string) {
   return async (params: CaptureScreenshotInput) => {
     try {
+      if (!params.url && !params.html) {
+        return {
+          isError: true,
+          content: [{ type: "text" as const, text: "Error: Provide either 'url' or 'html', not neither." }],
+        };
+      }
+      if (params.url && params.html) {
+        return {
+          isError: true,
+          content: [{ type: "text" as const, text: "Error: Provide either 'url' or 'html', not both." }],
+        };
+      }
+
       const body: Record<string, unknown> = {
         options: {
           width: params.width,
