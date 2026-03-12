@@ -10,6 +10,10 @@ import {
   registerAgentConfig,
   registerAgentHandler,
 } from "./tools/account.js";
+import {
+  generateInvoiceConfig,
+  generateInvoiceHandler,
+} from "./tools/invoice.js";
 
 export function createServer(apiKey: string): McpServer {
   const server = new McpServer({
@@ -36,6 +40,11 @@ export function createServer(apiKey: string): McpServer {
     "docapi_register_agent",
     registerAgentConfig,
     registerAgentHandler(apiKey)
+  );
+  server.registerTool(
+    "docapi_generate_invoice",
+    generateInvoiceConfig,
+    generateInvoiceHandler(apiKey)
   );
 
   return server;
