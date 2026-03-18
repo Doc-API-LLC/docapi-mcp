@@ -11,15 +11,22 @@ async function runHttp(): Promise<void> {
   async function handleMcp(req: Request, res: Response) {
     const apiKey = req.headers["x-api-key"];
 
+    // Allow unauthenticated initialize/tools/list for MCP scanners (e.g. Smithery)
+    const method = req.body?.method;
+    const isReadOnly = method === "initialize" || method === "tools/list" || method === "notifications/initialized";
+
     if (!apiKey || typeof apiKey !== "string") {
-      res.status(401).json({
-        error:
-          "x-api-key header required. Get a free API key at https://www.docapi.co/signup",
-      });
-      return;
+      if (!isReadOnly) {
+        // Use 403 (not 401) to avoid triggering OAuth dynamic client registration
+        res.status(403).json({
+          error:
+            "x-api-key header required. Get a free API key at https://www.docapi.co/signup",
+        });
+        return;
+      }
     }
 
-    const server = createServer(apiKey);
+    const server = createServer(typeof apiKey === "string" ? apiKey : "scanner-no-key");
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
