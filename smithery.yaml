@@ -1,0 +1,18 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - docapiKey
+    properties:
+      docapiKey:
+        type: string
+        description: Your DocAPI API key from docapi.co
+  commandFunction: |-
+    (config) => ({
+      command: "node",
+      args: ["dist/index.js"],
+      env: {
+        DOCAPI_KEY: config.docapiKey
+      }
+    })
