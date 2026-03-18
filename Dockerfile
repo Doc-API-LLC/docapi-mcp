@@ -9,7 +9,4 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-ENV TRANSPORT=stdio
-ENV DOCAPI_KEY=""
-
 ENTRYPOINT ["node", "dist/index.js"]
