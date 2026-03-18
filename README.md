@@ -2,6 +2,8 @@
 
 MCP server for [DocAPI](https://www.docapi.co) — generate PDFs and screenshots via Claude Desktop, Cursor, and any MCP-compatible agent.
 
+[![DocAPI MCP server](https://glama.ai/mcp/servers/Doc-API-LLC/docapi-mcp/badges/card.svg)](https://glama.ai/mcp/servers/Doc-API-LLC/docapi-mcp)
+
 ## Tools
 
 | Tool | Description |
