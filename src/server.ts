@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { generatePdfConfig, generatePdfHandler } from "./tools/pdf.js";
 import {
   captureScreenshotConfig,
@@ -45,6 +46,20 @@ export function createServer(apiKey: string): McpServer {
     "docapi_generate_invoice",
     generateInvoiceConfig,
     generateInvoiceHandler(apiKey)
+  );
+
+  server.prompt(
+    "generate_pdf_from_html",
+    "Generate a PDF from provided HTML content",
+    { html: z.string().describe("The HTML content to convert to PDF") },
+    async ({ html }) => ({
+      messages: [
+        {
+          role: "user" as const,
+          content: { type: "text" as const, text: `Please use the docapi_generate_pdf tool to convert this HTML to a PDF:\n\n${html}` },
+        },
+      ],
+    })
   );
 
   return server;
