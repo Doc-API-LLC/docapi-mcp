@@ -8,7 +8,7 @@ async function runHttp(): Promise<void> {
   const app = express();
   app.use(express.json());
 
-  app.post("/mcp", async (req: Request, res: Response) => {
+  async function handleMcp(req: Request, res: Response) {
     const apiKey = req.headers["x-api-key"];
 
     if (!apiKey || typeof apiKey !== "string") {
@@ -27,7 +27,10 @@ async function runHttp(): Promise<void> {
     res.on("close", () => transport.close());
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
-  });
+  }
+
+  app.post("/mcp", handleMcp);
+  app.post("/", handleMcp);
 
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", server: "docapi-mcp-server", version: "1.0.0" });
