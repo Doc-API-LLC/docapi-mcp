@@ -1,6 +1,7 @@
 {
-  "name": "docapi-mcp",
+  "name": "@docapi/mcp",
   "version": "1.0.0",
+  "mcpName": "io.github.Doc-API-LLC/docapi",
   "description": "MCP server for DocAPI — generate PDFs and screenshots via Claude Desktop, Cursor, and any MCP-compatible agent",
   "type": "module",
   "main": "dist/index.js",
